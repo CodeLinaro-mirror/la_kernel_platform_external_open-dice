@@ -76,19 +76,16 @@ of the reserved range.
 Unless explicitly stated as required in the [versions](#versions) section, each
 field is optional. If no fields are relevant, an empty map should be encoded.
 
-```
-| Name              | Key    | Value type | Meaning                            |
-| ----------------- | ------ | ---------- | -----------------------------------|
-| Component name    | -70002 | tstr       | Name of the component              |
-| Component version | -70003 | int / tstr | Version of the component           |
-| Resettable        | -70004 | null       | If present, key changes on factory |
-:                   :        :            : reset                              :
-| Security version  | -70005 | uint       | Machine-comparable, monotonically  |
-:                   :        :            : increasing version of the component:
-:                   :        :            : where a greater value indicates a  :
-:                   :        :            : newer version, for example, the    :
-:                   :        :            : anti-rollback counter              :
-```
+Name                   | Key    | Value&nbsp;type      | Meaning
+---                    | ---    | ---                  | ---
+Component&nbsp;name    | -70002 | tstr                 | Name of the component
+Component&nbsp;version | -70003 | int&nbsp;/&nbsp;tstr | Version of the component
+Resettable             | -70004 | null                 | If present, key changes on factory reset
+Security&nbsp;version  | -70005 | uint                 | Machine-comparable, monotonically increasing version of the component where a greater value indicates a newer version. This value must increment for every update that changes the code hash, for example by using the timestamp of the version's release.
+[RKP&nbsp;VM][rkp-vm]&nbsp;marker | -70006 | null      | See the [Android HAL documentation][rkp-hal-readme] for precise semantics, as they vary by Android version.
+
+[rkp-vm]: https://android.googlesource.com/platform/packages/modules/Virtualization/+/main/service_vm/README.md#rkp-vm-remote-key-provisioning-virtual-machine
+[rkp-hal-readme]: https://android.googlesource.com/platform/hardware/interfaces/+/main/security/rkp/README.md
 
 ### Versions
 
@@ -99,15 +96,16 @@ updates and lower-level software (such as ROM) that might not update.
 
 Versions of this profile are identified by their profile name which is composed
 of the prefix `"android."` followed by the Android version number it aligns
-with.  If no profile name is included in the certificate, `"android.14"` is
-assumed.
+with. Certificates declare which profile they are following in the `profileName`
+field defined by the [Open Profile for DICE](specification.md). If no profile
+name is included in the certificate, `"android.14"` is assumed.
 
 Within a DICE chain, the version of the profile used in each certificate must
 be the same or greater than the version used in the previous certificate. This
 ensures the all certificates are aware of, and can maintain, any chain
 invariants that can be added in any version of the profile.
 
-Android provides the [`hwtrust`](hwtrust-tool) tool which can validate that
+Android provides the [`hwtrust`][hwtrust-tool] tool which can validate that
 certificate chains conform to this profile and can assist in diagnosing
 problems.
 
@@ -132,7 +130,8 @@ The profile named `"android.14"` aligns with Android 14.
 
 #### `"android.15"`
 
-The profile named `"android.15"` aligns with Android 15.
+The profile named `"android.15"` aligns with Android 15. It is backwards
+compatible with the previous versions of the Andorid Profile for DICE.
 
 *   Based on the [Open Profile for DICE v2.5][open-dice-v2.5].
 *   The `configurationHash` field is permitted to be missing rather than being
@@ -141,7 +140,8 @@ The profile named `"android.15"` aligns with Android 15.
 #### `"android.16"`
 
 The profile named `"android.16"` aligns with Android 16 and is still subject to
-change.
+change. It is backwards compatible with the previous versions of the Android
+Profile for DICE.
 
 *   Based on the [Open Profile for DICE v2.5][open-dice-v2.5].
 *   The security version field of the [configuration
