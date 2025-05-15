@@ -169,6 +169,7 @@ cc_library_static {
 cc_library_static {
     name: "libopen_dice_clear_memory",
     defaults: ["cc_baremetal_defaults"],
+    host_supported: true,
     srcs: ["src/clear_memory.c"],
     header_libs: ["libopen_dice_headers"],
     visibility: [
