@@ -16,5 +16,5 @@
 # single merge CL despite appearing as though there will be a CL for each
 # commit.
 
-git fetch aosp upstream-main
-git merge aosp/upstream-main
+git fetch goog upstream-main
+git merge goog/upstream-main
