@@ -221,9 +221,9 @@ TEST(DiceAndroidHandoverTest, ParseHandover) {
       0x40, 0x22, 0x40, 0x84, 0x40, 0xa0, 0x40, 0x40,
       // 8-bytes of trailing data that aren't part of the DICE chain.
       0x00, 0x41, 0x55, 0xa0, 0x42, 0x11, 0x22, 0x40};
-  const uint8_t *cdi_attest;
-  const uint8_t *cdi_seal;
-  const uint8_t *chain;
+  const uint8_t* cdi_attest;
+  const uint8_t* cdi_seal;
+  const uint8_t* chain;
   size_t chain_size;
   DiceResult result = DiceAndroidHandoverParse(
       handover, sizeof(handover), &cdi_attest, &cdi_seal, &chain, &chain_size);
@@ -247,9 +247,9 @@ TEST(DiceAndroidHandoverTest, ParseHandoverWithoutDiceChain) {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       // 8-bytes of trailing data that aren't part of the DICE chain.
       0x00, 0x41, 0x55, 0xa0, 0x42, 0x11, 0x22, 0x40};
-  const uint8_t *cdi_attest;
-  const uint8_t *cdi_seal;
-  const uint8_t *chain;
+  const uint8_t* cdi_attest;
+  const uint8_t* cdi_seal;
+  const uint8_t* chain;
   size_t chain_size;
   DiceResult result = DiceAndroidHandoverParse(
       handover, sizeof(handover), &cdi_attest, &cdi_seal, &chain, &chain_size);
@@ -275,9 +275,9 @@ TEST(DiceAndroidHandoverTest, ParseHandoverWithoutDiceChainButUnknownField) {
       0x04, 0x01,
       // 8-bytes of trailing data that aren't part of the DICE chain.
       0x00, 0x41, 0x55, 0xa0, 0x42, 0x11, 0x22, 0x40};
-  const uint8_t *cdi_attest;
-  const uint8_t *cdi_seal;
-  const uint8_t *chain;
+  const uint8_t* cdi_attest;
+  const uint8_t* cdi_seal;
+  const uint8_t* chain;
   size_t chain_size;
   DiceResult result = DiceAndroidHandoverParse(
       handover, sizeof(handover), &cdi_attest, &cdi_seal, &chain, &chain_size);
@@ -301,9 +301,9 @@ TEST(DiceAndroidHandoverTest, ParseHandoverCdiTooLarge) {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       // 8-bytes of trailing data that aren't part of the DICE chain.
       0x00, 0x41, 0x55, 0xa0, 0x42, 0x11, 0x22, 0x40};
-  const uint8_t *cdi_attest;
-  const uint8_t *cdi_seal;
-  const uint8_t *chain;
+  const uint8_t* cdi_attest;
+  const uint8_t* cdi_seal;
+  const uint8_t* chain;
   size_t chain_size;
   DiceResult result = DiceAndroidHandoverParse(
       handover, sizeof(handover), &cdi_attest, &cdi_seal, &chain, &chain_size);
