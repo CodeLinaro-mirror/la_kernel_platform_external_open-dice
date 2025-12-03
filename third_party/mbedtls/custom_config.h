@@ -34,10 +34,9 @@
 #define MBEDTLS_PK_C
 #define MBEDTLS_PK_PARSE_C
 #define MBEDTLS_PK_WRITE_C
+#define MBEDTLS_SHA256_C
 #define MBEDTLS_SHA512_C
 #define MBEDTLS_X509_CREATE_C
 #define MBEDTLS_X509_CRT_WRITE_C
-
-#include "mbedtls/check_config.h"
 
 #endif /* THIRD_PARTY_MBEDTLS_CUSTOM_CONFIG_H_ */
