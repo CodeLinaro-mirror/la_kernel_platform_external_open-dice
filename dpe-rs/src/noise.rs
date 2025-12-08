@@ -16,8 +16,8 @@
 //! Noise_NK_X25519_AESGCM_SHA512 and Noise_NNpsk0_X25519_AESGCM_SHA512.
 
 use crate::crypto::{
-    Commit, Counter, DhPrivateKey, DhPublicKey, HandshakeMessage,
-    HandshakePayload, Hash, SessionCrypto,
+    Commit, Counter, DhPrivateKey, HandshakeMessage, HandshakePayload, Hash,
+    SessionCrypto,
 };
 use crate::error::{DpeResult, ErrCode};
 use crate::memory::Message;
@@ -43,7 +43,7 @@ where
 
 /// A cipher state type that can be used as a
 /// [`SessionCipherState`](crate::crypto::SessionCrypto::SessionCipherState).
-pub struct NoiseCipherState<C: noise_protocol::Cipher> {
+pub(crate) struct NoiseCipherState<C: noise_protocol::Cipher> {
     k: C::Key,
     n: u64,
     n_staged: u64,
@@ -114,17 +114,8 @@ impl<C: noise_protocol::Cipher> From<&noise_protocol::CipherState<C>>
     }
 }
 
-/// Returns the public key corresponding to a given `dh_private_key`.
-pub fn get_dh_public_key<D: noise_protocol::DH>(
-    dh_private_key: &DhPrivateKey,
-) -> DpeResult<DhPublicKey> {
-    DhPublicKey::from_slice(
-        D::pubkey(&D::Key::from_slice(dh_private_key.as_slice())).as_slice(),
-    )
-}
-
 /// A trait representing [`NoiseSessionCrypto`] dependencies.
-pub trait NoiseCryptoDeps {
+pub(crate) trait NoiseCryptoDeps {
     /// Cipher type
     type Cipher: noise_protocol::Cipher;
     /// DH type
@@ -134,7 +125,7 @@ pub trait NoiseCryptoDeps {
 }
 
 /// A Noise implementation of the [`SessionCrypto`] trait.
-pub struct NoiseSessionCrypto<D: NoiseCryptoDeps> {
+pub(crate) struct NoiseSessionCrypto<D: NoiseCryptoDeps> {
     #[allow(dead_code)]
     phantom: PhantomData<D>,
 }
@@ -335,202 +326,228 @@ where
     }
 }
 
-/// A SessionClient implements the initiator side of an encrypted session. A
-/// DPE does not use this itself, it is useful for clients and testing.
-pub struct SessionClient<D>
-where
-    D: NoiseCryptoDeps,
-{
-    handshake_state:
-        Option<noise_protocol::HandshakeState<D::DH, D::Cipher, D::Hash>>,
-    /// Cipher state for encrypting messages to a DPE.
-    pub encrypt_cipher_state: NoiseCipherState<D::Cipher>,
-    /// Cipher state for decrypting messages from a DPE.
-    pub decrypt_cipher_state: NoiseCipherState<D::Cipher>,
-    /// PSK seed for deriving sessions. See [`derive_psk`].
-    ///
-    /// [`derive_psk`]: #method.derive_psk
-    pub psk_seed: Hash,
-}
-
-impl<D> Clone for SessionClient<D>
-where
-    D: NoiseCryptoDeps,
-{
-    fn clone(&self) -> Self {
-        Self {
-            handshake_state: self.handshake_state.clone(),
-            encrypt_cipher_state: self.encrypt_cipher_state.clone(),
-            decrypt_cipher_state: self.decrypt_cipher_state.clone(),
-            psk_seed: self.psk_seed.clone(),
-        }
-    }
-}
-
-impl<D> Default for SessionClient<D>
-where
-    D: NoiseCryptoDeps,
-{
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<D> core::fmt::Debug for SessionClient<D>
-where
-    D: NoiseCryptoDeps,
-{
-    fn fmt(&self, _: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        Ok(())
-    }
-}
-
-impl<D> SessionClient<D>
-where
-    D: NoiseCryptoDeps,
-{
-    /// Creates a new SessionClient instance. Set up by starting and finishing a
-    /// handshake.
-    pub fn new() -> Self {
-        Self {
-            handshake_state: Default::default(),
-            encrypt_cipher_state: Default::default(),
-            decrypt_cipher_state: Default::default(),
-            psk_seed: Default::default(),
-        }
-    }
-
-    /// Starts a handshake using a known `public_key` and returns a message that
-    /// works with the DPE OpenSession command.
-    pub fn start_handshake_with_known_public_key(
-        &mut self,
-        public_key: &DhPublicKey,
-    ) -> DpeResult<HandshakeMessage> {
-        #[allow(unused_results)]
-        let mut handshake_state = {
-            let mut builder = HandshakeStateBuilder::new();
-            builder.set_pattern(noise_protocol::patterns::noise_nk());
-            builder.set_is_initiator(true);
-            builder.set_prologue(&[]);
-            builder.set_rs(<D::DH as noise_protocol::DH>::Pubkey::from_slice(
-                public_key.as_slice(),
-            ));
-            builder.build_handshake_state()
-        };
-        let mut message = HandshakeMessage::new();
-        handshake_state.write_message(
-            &[],
-            message
-                .as_mut_sized(handshake_state.get_next_message_overhead())?,
-        )?;
-        self.handshake_state = Some(handshake_state);
-        Ok(message)
-    }
-
-    /// Starts a handshake using a `psk` and returns a message that works with
-    /// the DPE DeriveContext command. Use [`derive_psk`] to obtain this value
-    /// from an existing session.
-    ///
-    /// [`derive_psk`]: #method.derive_psk
-    pub fn start_handshake_with_psk(
-        &mut self,
-        psk: &Hash,
-    ) -> DpeResult<HandshakeMessage> {
-        #[allow(unused_results)]
-        let mut handshake_state = {
-            let mut builder = HandshakeStateBuilder::new();
-            builder.set_pattern(noise_protocol::patterns::noise_nn_psk0());
-            builder.set_is_initiator(true);
-            builder.set_prologue(&[]);
-            builder.build_handshake_state()
-        };
-        handshake_state
-            .push_psk(psk.as_slice().get(..32).ok_or(ErrCode::InternalError)?);
-        let mut message = HandshakeMessage::new();
-        handshake_state.write_message(
-            &[],
-            message
-                .as_mut_sized(handshake_state.get_next_message_overhead())?,
-        )?;
-        self.handshake_state = Some(handshake_state);
-        Ok(message)
-    }
-
-    /// Finishes a handshake started using one of the start_handshake_* methods.
-    /// On success, returns the handshake payload from the responder and sets up
-    /// internal state for subsequent calls to encrypt and decrypt.
-    pub fn finish_handshake(
-        &mut self,
-        responder_handshake: &HandshakeMessage,
-    ) -> DpeResult<HandshakePayload> {
-        match self.handshake_state {
-            None => Err(ErrCode::InvalidArgument),
-            Some(ref mut handshake) => {
-                let mut payload = HandshakePayload::new();
-                handshake.read_message(
-                    responder_handshake.as_slice(),
-                    payload.as_mut_sized(
-                        responder_handshake.len()
-                            - handshake.get_next_message_overhead(),
-                    )?,
-                )?;
-                let ciphers = handshake.get_ciphers();
-                self.encrypt_cipher_state = (&ciphers.0).into();
-                self.decrypt_cipher_state = (&ciphers.1).into();
-                self.psk_seed = Hash::from_slice(handshake.get_hash())?;
-                Ok(payload)
-            }
-        }
-    }
-
-    /// Derives a PSK from the current session.
-    pub fn derive_psk(&self) -> Hash {
-        // Note this is from a client perspective so the counters are hashed
-        // encrypt first and unmodified from their current state. A DPE will
-        // reverse the order and decrement the first counter in order to derive
-        // the same value (see derive_psk_from_session).
-        let mut hasher: D::Hash = Default::default();
-        hasher.input(self.psk_seed.as_slice());
-        hasher.input(&self.encrypt_cipher_state.n().to_le_bytes());
-        hasher.input(&self.decrypt_cipher_state.n().to_le_bytes());
-        (&hasher.result()).into()
-    }
-
-    /// Encrypts a message to send to a DPE and commits cipher state changes.
-    pub fn encrypt(&mut self, in_place_buffer: &mut Message) -> DpeResult<()> {
-        NoiseSessionCrypto::<D>::session_encrypt(
-            &mut self.encrypt_cipher_state,
-            in_place_buffer,
-        )?;
-        self.encrypt_cipher_state.commit();
-        Ok(())
-    }
-
-    /// Decrypts a message from a DPE.
-    pub fn decrypt(&mut self, in_place_buffer: &mut Message) -> DpeResult<()> {
-        NoiseSessionCrypto::<D>::session_decrypt(
-            &mut self.decrypt_cipher_state,
-            in_place_buffer,
-        )
-    }
-}
-
 #[cfg(test)]
-mod tests {
+pub(crate) mod test {
     use super::*;
+    use crate::crypto::DhPublicKey;
 
-    struct DepsForTesting {}
+    pub(crate) struct DepsForTesting {}
     impl NoiseCryptoDeps for DepsForTesting {
         type Cipher = noise_rust_crypto::Aes256Gcm;
         type DH = noise_rust_crypto::X25519;
         type Hash = noise_rust_crypto::Sha512;
     }
 
-    type SessionCryptoForTesting = NoiseSessionCrypto<DepsForTesting>;
+    pub(crate) type SessionCryptoForTesting =
+        NoiseSessionCrypto<DepsForTesting>;
 
-    type SessionClientForTesting = SessionClient<DepsForTesting>;
+    pub(crate) type SessionClientForTesting = SessionClient<DepsForTesting>;
 
-    type CipherStateForTesting = NoiseCipherState<noise_rust_crypto::Aes256Gcm>;
+    pub(crate) type CipherStateForTesting =
+        NoiseCipherState<noise_rust_crypto::Aes256Gcm>;
+
+    /// Returns the public key corresponding to a given `dh_private_key`.
+    pub(crate) fn get_dh_public_key<D: noise_protocol::DH>(
+        dh_private_key: &DhPrivateKey,
+    ) -> DpeResult<DhPublicKey> {
+        DhPublicKey::from_slice(
+            D::pubkey(&D::Key::from_slice(dh_private_key.as_slice()))
+                .as_slice(),
+        )
+    }
+
+    /// A SessionClient implements the initiator side of an encrypted session. A
+    /// DPE does not use this itself, it is useful for testing.
+    pub(crate) struct SessionClient<D>
+    where
+        D: NoiseCryptoDeps,
+    {
+        handshake_state:
+            Option<noise_protocol::HandshakeState<D::DH, D::Cipher, D::Hash>>,
+        /// Cipher state for encrypting messages to a DPE.
+        pub(crate) encrypt_cipher_state: NoiseCipherState<D::Cipher>,
+        /// Cipher state for decrypting messages from a DPE.
+        pub(crate) decrypt_cipher_state: NoiseCipherState<D::Cipher>,
+        /// PSK seed for deriving sessions. See [`derive_psk`].
+        ///
+        /// [`derive_psk`]: #method.derive_psk
+        pub(crate) psk_seed: Hash,
+    }
+
+    impl<D> Clone for SessionClient<D>
+    where
+        D: NoiseCryptoDeps,
+    {
+        fn clone(&self) -> Self {
+            Self {
+                handshake_state: self.handshake_state.clone(),
+                encrypt_cipher_state: self.encrypt_cipher_state.clone(),
+                decrypt_cipher_state: self.decrypt_cipher_state.clone(),
+                psk_seed: self.psk_seed.clone(),
+            }
+        }
+    }
+
+    impl<D> Default for SessionClient<D>
+    where
+        D: NoiseCryptoDeps,
+    {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
+    impl<D> core::fmt::Debug for SessionClient<D>
+    where
+        D: NoiseCryptoDeps,
+    {
+        fn fmt(&self, _: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            Ok(())
+        }
+    }
+
+    impl<D> SessionClient<D>
+    where
+        D: NoiseCryptoDeps,
+    {
+        /// Creates a new SessionClient instance. Set up by starting and
+        /// finishing a handshake.
+        pub(crate) fn new() -> Self {
+            Self {
+                handshake_state: Default::default(),
+                encrypt_cipher_state: Default::default(),
+                decrypt_cipher_state: Default::default(),
+                psk_seed: Default::default(),
+            }
+        }
+
+        /// Starts a handshake using a known `public_key` and returns a message
+        /// that works with the DPE OpenSession command.
+        pub(crate) fn start_handshake_with_known_public_key(
+            &mut self,
+            public_key: &DhPublicKey,
+        ) -> DpeResult<HandshakeMessage> {
+            #[allow(unused_results)]
+            let mut handshake_state = {
+                let mut builder = HandshakeStateBuilder::new();
+                builder.set_pattern(noise_protocol::patterns::noise_nk());
+                builder.set_is_initiator(true);
+                builder.set_prologue(&[]);
+                builder.set_rs(
+                    <D::DH as noise_protocol::DH>::Pubkey::from_slice(
+                        public_key.as_slice(),
+                    ),
+                );
+                builder.build_handshake_state()
+            };
+            let mut message = HandshakeMessage::new();
+            handshake_state.write_message(
+                &[],
+                message.as_mut_sized(
+                    handshake_state.get_next_message_overhead(),
+                )?,
+            )?;
+            self.handshake_state = Some(handshake_state);
+            Ok(message)
+        }
+
+        /// Starts a handshake using a `psk` and returns a message that works
+        /// with the DPE DeriveContext command. Use [`derive_psk`] to
+        /// obtain this value from an existing session.
+        ///
+        /// [`derive_psk`]: #method.derive_psk
+        pub(crate) fn start_handshake_with_psk(
+            &mut self,
+            psk: &Hash,
+        ) -> DpeResult<HandshakeMessage> {
+            #[allow(unused_results)]
+            let mut handshake_state = {
+                let mut builder = HandshakeStateBuilder::new();
+                builder.set_pattern(noise_protocol::patterns::noise_nn_psk0());
+                builder.set_is_initiator(true);
+                builder.set_prologue(&[]);
+                builder.build_handshake_state()
+            };
+            handshake_state.push_psk(
+                psk.as_slice().get(..32).ok_or(ErrCode::InternalError)?,
+            );
+            let mut message = HandshakeMessage::new();
+            handshake_state.write_message(
+                &[],
+                message.as_mut_sized(
+                    handshake_state.get_next_message_overhead(),
+                )?,
+            )?;
+            self.handshake_state = Some(handshake_state);
+            Ok(message)
+        }
+
+        /// Finishes a handshake started using one of the start_handshake_*
+        /// methods. On success, returns the handshake payload from the
+        /// responder and sets up internal state for subsequent calls to
+        /// encrypt and decrypt.
+        pub(crate) fn finish_handshake(
+            &mut self,
+            responder_handshake: &HandshakeMessage,
+        ) -> DpeResult<HandshakePayload> {
+            match self.handshake_state {
+                None => Err(ErrCode::InvalidArgument),
+                Some(ref mut handshake) => {
+                    let mut payload = HandshakePayload::new();
+                    handshake.read_message(
+                        responder_handshake.as_slice(),
+                        payload.as_mut_sized(
+                            responder_handshake.len()
+                                - handshake.get_next_message_overhead(),
+                        )?,
+                    )?;
+                    let ciphers = handshake.get_ciphers();
+                    self.encrypt_cipher_state = (&ciphers.0).into();
+                    self.decrypt_cipher_state = (&ciphers.1).into();
+                    self.psk_seed = Hash::from_slice(handshake.get_hash())?;
+                    Ok(payload)
+                }
+            }
+        }
+
+        /// Derives a PSK from the current session.
+        pub(crate) fn derive_psk(&self) -> Hash {
+            // Note this is from a client perspective so the counters are hashed
+            // encrypt first and unmodified from their current state. A DPE will
+            // reverse the order and decrement the first counter in order to
+            // derive the same value (see derive_psk_from_session).
+            let mut hasher: D::Hash = Default::default();
+            hasher.input(self.psk_seed.as_slice());
+            hasher.input(&self.encrypt_cipher_state.n().to_le_bytes());
+            hasher.input(&self.decrypt_cipher_state.n().to_le_bytes());
+            (&hasher.result()).into()
+        }
+
+        /// Encrypts a message to send to a DPE and commits cipher state
+        /// changes.
+        pub(crate) fn encrypt(
+            &mut self,
+            in_place_buffer: &mut Message,
+        ) -> DpeResult<()> {
+            NoiseSessionCrypto::<D>::session_encrypt(
+                &mut self.encrypt_cipher_state,
+                in_place_buffer,
+            )?;
+            self.encrypt_cipher_state.commit();
+            Ok(())
+        }
+
+        /// Decrypts a message from a DPE.
+        pub(crate) fn decrypt(
+            &mut self,
+            in_place_buffer: &mut Message,
+        ) -> DpeResult<()> {
+            NoiseSessionCrypto::<D>::session_decrypt(
+                &mut self.decrypt_cipher_state,
+                in_place_buffer,
+            )
+        }
+    }
 
     #[test]
     fn end_to_end_session() {
