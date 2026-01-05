@@ -14,39 +14,67 @@
 
 //! Global constants
 
-/// The maximum size in bytes of a message buffer.
-pub const MAX_MESSAGE_SIZE: usize = 8192;
+/// The maximum size in bytes of a message buffer. This is the largest buffer
+/// size the DPE will support.
+pub(crate) const MAX_MESSAGE_SIZE: usize = 8192;
+
+/// The maximum size in bytes of a small message buffer.
+pub(crate) const MAX_SMALL_MESSAGE_SIZE: usize = 256;
 
 /// The size in bytes of a cryptographic hash.
-pub const HASH_SIZE: usize = 64;
+pub(crate) const HASH_SIZE: usize = 64;
 
 /// The size in bytes of a private session key agreement key.
-pub const DH_PRIVATE_KEY_SIZE: usize = 32;
+pub(crate) const DH_PRIVATE_KEY_SIZE: usize = 32;
 
 /// The size in bytes of a public session key agreement key.
-pub const DH_PUBLIC_KEY_SIZE: usize = 32;
+pub(crate) const DH_PUBLIC_KEY_SIZE: usize = 32;
 
 /// The size in bytes of an encryption key, currently this is the same for
 /// session and sealing encryption.
-pub const ENCRYPTION_KEY_SIZE: usize = 32;
+pub(crate) const ENCRYPTION_KEY_SIZE: usize = 32;
 
 /// The size in bytes of a serialized public key for signing.
-pub const SIGNING_PUBLIC_KEY_SIZE: usize = 32;
+pub(crate) const SIGNING_PUBLIC_KEY_SIZE: usize = 32;
 
 /// The size in bytes of a serialized private key for signing.
-pub const SIGNING_PRIVATE_KEY_SIZE: usize = 32;
+pub(crate) const SIGNING_PRIVATE_KEY_SIZE: usize = 32;
 
 /// The size in bytes of a serialized public key for sealing.
-pub const SEALING_PUBLIC_KEY_SIZE: usize = 32;
+pub(crate) const SEALING_PUBLIC_KEY_SIZE: usize = 32;
 
 /// The size in bytes of a serialized private key for sealing.
-pub const SEALING_PRIVATE_KEY_SIZE: usize = 32;
+pub(crate) const SEALING_PRIVATE_KEY_SIZE: usize = 32;
 
 /// The maximum size in bytes of a signature produced by the Sign command.
-pub const MAX_SIGNATURE_SIZE: usize = 64;
+pub(crate) const MAX_SIGNATURE_SIZE: usize = 64;
 
 /// The maximum size in bytes of a session handshake message.
-pub const MAX_HANDSHAKE_MESSAGE_SIZE: usize = 64;
+pub(crate) const MAX_HANDSHAKE_MESSAGE_SIZE: usize = 64;
 
 /// The maximum size in bytes of a session handshake payload.
-pub const MAX_HANDSHAKE_PAYLOAD_SIZE: usize = 8;
+pub(crate) const MAX_HANDSHAKE_PAYLOAD_SIZE: usize = 8;
+
+/// The size in bytes of a CDI.
+pub(crate) const DICE_CDI_SIZE: usize = 32;
+
+/// The size in bytes of a UDS.
+pub(crate) const DICE_UDS_SIZE: usize = 64;
+
+/// The size in bytes of a DPE context handle.
+pub(crate) const DPE_HANDLE_SIZE: usize = 16;
+
+/// The maximum size in bytes of a certificate.
+pub(crate) const DPE_MAX_CERTIFICATE_SIZE: usize = 1024;
+
+/// The maximum number of certificates that can appear in a certificate chain.
+pub(crate) const DPE_MAX_CERTIFICATES_PER_CHAIN: usize = 4;
+
+/// The maximum number of certificate info blocks that can be held per context.
+pub(crate) const DPE_MAX_CERTIFICATE_INFOS_PER_CONTEXT: usize = 6;
+
+/// The maximum number of internal inputs that can be included in a message.
+pub(crate) const DPE_MAX_INTERNAL_INPUTS: usize = 8;
+
+/// The maximum number of version slots supported by a DPE context.
+pub(crate) const DPE_MAX_VERSION_SLOTS: usize = 16;
