@@ -47,6 +47,9 @@ derivation.
 Ed25519 is recommended for performance and memory usage reasons. ECDSA with
 curves P-256 or P-384 are acceptable.
 
+ML-DSA-65 or ML-DSA-87 are acceptable for PQC support. However, keep in mind
+that CNSA 2.0 accepts only ML-DSA-87.
+
 ## Certificate Details
 
 Only CBOR certificates are allowed by this profile. Other certificate types,
@@ -75,6 +78,9 @@ of the reserved range.
 
 Unless explicitly stated as required in the [versions](#versions) section, each
 field is optional. If no fields are relevant, an empty map should be encoded.
+
+The `configurationHash` field is permitted to be missing in all versions of the
+Android Profile for DICE.
 
 Name                   | Key    | Value&nbsp;type      | Meaning
 ---                    | ---    | ---                  | ---
@@ -120,8 +126,6 @@ the version they are listed under.
 The profile named `"android.14"` was introduced with Android 14.
 
 *   Based on the [Open Profile for DICE v2.4][open-dice-v2.4].
-*   The `configurationHash` field is permitted to be missing rather than being
-    required, as specified by the Open Profile for DICE.
 *   The `mode` field is permitted to be encoded as an integer rather than the
     byte string that is specified by the Open Profile for DICE.
 *   The `keyUsage` field is permitted to be encoded in big-endian byte order as
@@ -135,8 +139,6 @@ The profile named `"android.15"` was introduced with Android 15. It is backwards
 compatible with the previous versions of the Android Profile for DICE.
 
 *   Based on the [Open Profile for DICE v2.5][open-dice-v2.5].
-*   The `configurationHash` field is permitted to be missing rather than being
-    required, as specified by the Open Profile for DICE.
 
 #### `"android.16"`
 
@@ -144,16 +146,25 @@ The profile named `"android.16"` was introduced with Android 16. It is backwards
 compatible with the previous versions of the Android Profile for DICE.
 
 *   Based on the [Open Profile for DICE v2.5][open-dice-v2.5].
-*   The `configurationHash` field is permitted to be missing rather than being
-    required, as specified by the Open Profile for DICE.
 *   The security version field of the [configuration
     descriptor](#configuration-descriptor) is required.
+
+#### `"android.17"`
 
 Please note there is no `"android.17"` profile as there were no changes to
 Android DICE support between Android versions 16 and 17. Google recommends
 that chipset vendors implement the `"android.16"` profile, as it is the most
 up-to-date.
 
+#### `"android.18"`
+
+The profile named `"android.18"` aligns with Android 18 and is still subject to
+change. It is backwards compatible with the previous versions of the Android
+Profile for DICE.
+
+*   Based on the [Open Profile for DICE v2.6][open-dice-v2.6].
+*   Added support for ML-DSA-65 and ML-DSA-87 to the profile.
 
 [open-dice-v2.4]: https://pigweed.googlesource.com/open-dice/+/f9f454ae493bfe76ec2af8011eb7543c20c5ffc2/docs/specification.md
 [open-dice-v2.5]: https://pigweed.googlesource.com/open-dice/+/0b5044098bf9b40128927d675dea4ec1fb75c510/docs/specification.md
+[open-dice-v2.6]: https://pigweed.googlesource.com/open-dice/+/03e19ce5d8557d10f06cb1319bc6043685dfd22c/docs/specification.md

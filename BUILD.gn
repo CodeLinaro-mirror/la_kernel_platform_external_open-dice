@@ -83,6 +83,14 @@ config("boringssl_multialg_ops_config") {
   include_dirs = [ "//include/dice/config/boringssl_multialg" ]
 }
 
+config("boringssl_mldsa65_ops_config") {
+  include_dirs = [ "//include/dice/config/boringssl_mldsa_65" ]
+}
+
+config("boringssl_mldsa87_ops_config") {
+  include_dirs = [ "//include/dice/config/boringssl_mldsa_87" ]
+}
+
 pw_static_library("dice_with_boringssl_ed25519_ops") {
   public = [
     "include/dice/dice.h",
@@ -145,6 +153,48 @@ pw_static_library("dice_with_boringssl_p384_ops") {
   ]
 }
 
+pw_static_library("dice_with_boringssl_mldsa65_ops") {
+  public = [
+    "include/dice/boringssl_mldsa_utils.h",
+    "include/dice/dice.h",
+    "include/dice/utils.h",
+  ]
+  sources = [
+    "src/boringssl_cert_op.c",
+    "src/boringssl_hash_kdf_ops.c",
+    "src/boringssl_mldsa65_ops.c",
+    "src/clear_memory.c",
+    "src/dice.c",
+    "src/utils.c",
+  ]
+  deps = [ "//third_party/boringssl:crypto" ]
+  all_dependent_configs = [
+    ":boringssl_mldsa65_ops_config",
+    ":example_profile",
+  ]
+}
+
+pw_static_library("dice_with_boringssl_mldsa87_ops") {
+  public = [
+    "include/dice/boringssl_mldsa_utils.h",
+    "include/dice/dice.h",
+    "include/dice/utils.h",
+  ]
+  sources = [
+    "src/boringssl_cert_op.c",
+    "src/boringssl_hash_kdf_ops.c",
+    "src/boringssl_mldsa87_ops.c",
+    "src/clear_memory.c",
+    "src/dice.c",
+    "src/utils.c",
+  ]
+  deps = [ "//third_party/boringssl:crypto" ]
+  all_dependent_configs = [
+    ":boringssl_mldsa87_ops_config",
+    ":example_profile",
+  ]
+}
+
 config("mbedtls_ops_config") {
   include_dirs = [ "//include//dice/config/mbedtls_ecdsa_p256" ]
   defines = [ "MBEDTLS_ALLOW_PRIVATE_ACCESS" ]
@@ -198,6 +248,16 @@ pw_static_library("boringssl_ecdsa_utils") {
     "include/dice/utils.h",
   ]
   sources = [ "src/boringssl_ecdsa_utils.c" ]
+  deps = [ "//third_party/boringssl:crypto" ]
+}
+
+pw_static_library("boringssl_mldsa_utils") {
+  public = [
+    "include/dice/boringssl_mldsa_utils.h",
+    "include/dice/dice.h",
+    "include/dice/utils.h",
+  ]
+  sources = [ "src/boringssl_mldsa_utils.c" ]
   deps = [ "//third_party/boringssl:crypto" ]
 }
 
@@ -264,6 +324,7 @@ pw_static_library("dice_with_cbor_multialg") {
   ]
   deps = [
     ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
     ":cbor_writer",
     "//third_party/boringssl:crypto",
   ]
@@ -289,6 +350,54 @@ pw_static_library("dice_with_cbor_template_ed25519_cert") {
   deps = [ "//third_party/boringssl:crypto" ]
   all_dependent_configs = [
     ":boringssl_ed25519_ops_config",
+    ":default_profile",
+  ]
+}
+
+pw_static_library("dice_with_cbor_mldsa65_cert") {
+  public = [
+    "include/dice/dice.h",
+    "include/dice/utils.h",
+  ]
+  sources = [
+    "src/boringssl_hash_kdf_ops.c",
+    "src/boringssl_mldsa65_ops.c",
+    "src/cbor_cert_op.c",
+    "src/clear_memory.c",
+    "src/dice.c",
+    "src/utils.c",
+  ]
+  deps = [
+    ":boringssl_mldsa_utils",
+    ":cbor_writer",
+    "//third_party/boringssl:crypto",
+  ]
+  all_dependent_configs = [
+    ":boringssl_mldsa65_ops_config",
+    ":default_profile",
+  ]
+}
+
+pw_static_library("dice_with_cbor_mldsa87_cert") {
+  public = [
+    "include/dice/dice.h",
+    "include/dice/utils.h",
+  ]
+  sources = [
+    "src/boringssl_hash_kdf_ops.c",
+    "src/boringssl_mldsa87_ops.c",
+    "src/cbor_cert_op.c",
+    "src/clear_memory.c",
+    "src/dice.c",
+    "src/utils.c",
+  ]
+  deps = [
+    ":boringssl_mldsa_utils",
+    ":cbor_writer",
+    "//third_party/boringssl:crypto",
+  ]
+  all_dependent_configs = [
+    ":boringssl_mldsa87_ops_config",
     ":default_profile",
   ]
 }
@@ -349,6 +458,36 @@ pw_test("dice_test") {
   ]
 }
 
+pw_test("boringssl_mldsa65_ops_test") {
+  sources = [
+    "src/boringssl_mldsa65_ops_test.cc",
+    "src/test_utils.cc",
+  ]
+  deps = [
+    ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
+    ":dice_with_boringssl_mldsa65_ops",
+    "$dir_pw_string:pw_string",
+    "//third_party/boringssl:crypto",
+    "//third_party/cose-c:cose-c_ed25519",
+  ]
+}
+
+pw_test("boringssl_mldsa87_ops_test") {
+  sources = [
+    "src/boringssl_mldsa87_ops_test.cc",
+    "src/test_utils.cc",
+  ]
+  deps = [
+    ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
+    ":dice_with_boringssl_mldsa87_ops",
+    "$dir_pw_string:pw_string",
+    "//third_party/boringssl:crypto",
+    "//third_party/cose-c:cose-c_ed25519",
+  ]
+}
+
 pw_test("boringssl_ed25519_ops_test") {
   sources = [
     "src/boringssl_ed25519_ops_test.cc",
@@ -356,6 +495,7 @@ pw_test("boringssl_ed25519_ops_test") {
   ]
   deps = [
     ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
     ":dice_with_boringssl_ed25519_ops",
     "$dir_pw_string:pw_string",
     "//third_party/boringssl:crypto",
@@ -377,6 +517,7 @@ pw_test("boringssl_p256_ops_test") {
   ]
   deps = [
     ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
     ":dice_with_boringssl_p256_ops",
     "$dir_pw_string:pw_string",
     "//third_party/boringssl:crypto",
@@ -400,6 +541,22 @@ pw_executable("boringssl_p384_ops_fuzzer") {
   ]
 }
 
+pw_executable("boringssl_mldsa65_ops_fuzzer") {
+  deps = [
+    ":boringssl_mldsa_utils",
+    ":dice_with_boringssl_mldsa65_ops",
+    ":fuzzer",
+  ]
+}
+
+pw_executable("boringssl_mldsa87_ops_fuzzer") {
+  deps = [
+    ":boringssl_mldsa_utils",
+    ":dice_with_boringssl_mldsa87_ops",
+    ":fuzzer",
+  ]
+}
+
 pw_test("template_cert_op_test") {
   sources = [
     "src/template_cert_op_test.cc",
@@ -407,6 +564,7 @@ pw_test("template_cert_op_test") {
   ]
   deps = [
     ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
     ":dice_with_x509_template_cert",
     "$dir_pw_string:pw_string",
     "//third_party/boringssl:crypto",
@@ -428,6 +586,7 @@ pw_test("cbor_ed25519_cert_op_test") {
   ]
   deps = [
     ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
     ":dice_with_cbor_ed25519_cert",
     "$dir_pw_string:pw_string",
     "//third_party/boringssl:crypto",
@@ -442,6 +601,7 @@ pw_test("cbor_p256_cert_op_test") {
   ]
   deps = [
     ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
     ":dice_with_cbor_p256_cert",
     "$dir_pw_string:pw_string",
     "//third_party/boringssl:crypto",
@@ -456,6 +616,7 @@ pw_test("cbor_p384_cert_op_test") {
   ]
   deps = [
     ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
     ":dice_with_cbor_p384_cert",
     "$dir_pw_string:pw_string",
     "//third_party/boringssl:crypto",
@@ -470,10 +631,55 @@ pw_test("cbor_multialg_op_test") {
   ]
   deps = [
     ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
     ":dice_with_cbor_multialg",
     "$dir_pw_string:pw_string",
     "//third_party/boringssl:crypto",
     "//third_party/cose-c:cose-c_multialg",
+  ]
+}
+
+pw_test("cbor_mldsa65_cert_op_test") {
+  sources = [
+    "src/cbor_mldsa65_cert_op_test.cc",
+    "src/test_utils.cc",
+  ]
+  deps = [
+    ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
+    ":dice_with_cbor_mldsa65_cert",
+    "$dir_pw_string:pw_string",
+    "//third_party/boringssl:crypto",
+    "//third_party/cose-c:cose-c_mldsa65",
+  ]
+}
+
+pw_test("cbor_mldsa87_cert_op_test") {
+  sources = [
+    "src/cbor_mldsa87_cert_op_test.cc",
+    "src/test_utils.cc",
+  ]
+  deps = [
+    ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
+    ":dice_with_cbor_mldsa87_cert",
+    "$dir_pw_string:pw_string",
+    "//third_party/boringssl:crypto",
+    "//third_party/cose-c:cose-c_mldsa87",
+  ]
+}
+
+pw_executable("cbor_mldsa65_cert_op_fuzzer") {
+  deps = [
+    ":dice_with_cbor_mldsa65_cert",
+    ":fuzzer",
+  ]
+}
+
+pw_executable("cbor_mldsa87_cert_op_fuzzer") {
+  deps = [
+    ":dice_with_cbor_mldsa87_cert",
+    ":fuzzer",
   ]
 }
 
@@ -491,6 +697,7 @@ pw_test("template_cbor_ed25519_cert_op_test") {
   ]
   deps = [
     ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
     ":dice_with_cbor_template_ed25519_cert",
     "$dir_pw_string:pw_string",
     "//third_party/boringssl:crypto",
@@ -512,6 +719,7 @@ pw_test("mbedtls_ops_test") {
   ]
   deps = [
     ":boringssl_ecdsa_utils",
+    ":boringssl_mldsa_utils",
     ":dice_with_mbedtls_ops",
     "$dir_pw_string:pw_string",
     "//third_party/boringssl:crypto",
@@ -535,7 +743,7 @@ pw_static_library("dice_android") {
   deps = [
     ":cbor_reader",
     ":cbor_writer",
-    ":dice_with_cbor_ed25519_cert",
+    ":dice_with_cbor_mldsa87_cert",
   ]
 }
 
@@ -552,12 +760,16 @@ pw_executable("android_fuzzer") {
 pw_test_group("tests") {
   tests = [
     ":android_test",
+    ":boringssl_mldsa65_ops_test",
+    ":boringssl_mldsa87_ops_test",
     ":boringssl_ed25519_ops_test",
     ":boringssl_p256_ops_test",
     ":cbor_ed25519_cert_op_test",
     ":cbor_p256_cert_op_test",
     ":cbor_p384_cert_op_test",
     ":cbor_multialg_op_test",
+    ":cbor_mldsa65_cert_op_test",
+    ":cbor_mldsa87_cert_op_test",
     ":cbor_reader_test",
     ":cbor_writer_test",
     ":dice_test",
@@ -571,9 +783,13 @@ group("fuzzers") {
   deps = [
     ":android_fuzzer",
     ":boringssl_ed25519_ops_fuzzer",
+    ":boringssl_mldsa65_ops_fuzzer",
+    ":boringssl_mldsa87_ops_fuzzer",
     ":boringssl_p256_ops_fuzzer",
     ":boringssl_p384_ops_fuzzer",
     ":cbor_ed25519_cert_op_fuzzer",
+    ":cbor_mldsa65_cert_op_fuzzer",
+    ":cbor_mldsa87_cert_op_fuzzer",
     ":cbor_reader_fuzzer",
     ":cbor_writer_fuzzer",
     ":mbedtls_ops_fuzzer",
