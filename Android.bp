@@ -78,7 +78,6 @@ filegroup {
     name: "libopen_dice_cbor_multialg_srcs",
     srcs: [
         "src/boringssl_ecdsa_utils.c",
-        "src/boringssl_mldsa_utils.c",
         "src/boringssl_multialg_ops.c",
     ],
 }

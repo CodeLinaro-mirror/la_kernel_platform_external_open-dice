@@ -32,22 +32,22 @@ byte_array_wrapper!(Cdi, DICE_CDI_SIZE, "CDI");
 
 /// A Vec wrapper to represent a single encoded certificate.
 #[derive(Clone, Debug, Default, Eq, PartialEq, Hash, ZeroizeOnDrop)]
-pub struct Certificate(pub Vec<u8, DPE_MAX_CERTIFICATE_SIZE>);
+pub(crate) struct Certificate(pub(crate) Vec<u8, DPE_MAX_CERTIFICATE_SIZE>);
 
 /// Contains all the information necessary to construct a certificate except for
 /// the subject and issuer keys.
 #[derive(Clone, Debug, Default, Eq, PartialEq, Hash, ZeroizeOnDrop)]
-pub struct CertificateInfo(pub Vec<u8, DPE_MAX_CERTIFICATE_SIZE>);
+pub(crate) struct CertificateInfo(pub(crate) Vec<u8, DPE_MAX_CERTIFICATE_SIZE>);
 
 /// A Vec wrapper to represent a [`CertificateInfo`] list.
 #[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
-pub struct CertificateInfoList(
-    pub Vec<CertificateInfo, DPE_MAX_CERTIFICATE_INFOS_PER_CONTEXT>,
+pub(crate) struct CertificateInfoList(
+    pub(crate) Vec<CertificateInfo, DPE_MAX_CERTIFICATE_INFOS_PER_CONTEXT>,
 );
 
 /// Represents a code input value as defined by the Open Profile for DICE.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub enum DiceInputCode<'a> {
+pub(crate) enum DiceInputCode<'a> {
     /// The client provides the hash directly.
     CodeHash(Hash),
     /// The client provides a free-form descriptor.
@@ -56,7 +56,7 @@ pub enum DiceInputCode<'a> {
 
 /// Represents an authority input value as defined by the Open Profile for DICE.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub enum DiceInputAuthority<'a> {
+pub(crate) enum DiceInputAuthority<'a> {
     /// The client provides the hash directly.
     AuthorityHash(Hash),
     /// The client provides a free-form descriptor.
@@ -65,7 +65,7 @@ pub enum DiceInputAuthority<'a> {
 
 /// Represents a config value as defined by the Open Profile for DICE.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub enum DiceInputConfig<'a> {
+pub(crate) enum DiceInputConfig<'a> {
     /// The client provides a 64-byte value.
     ConfigInlineValue(Hash),
     /// The client provides a free-form descriptor.
@@ -78,7 +78,7 @@ pub enum DiceInputConfig<'a> {
 #[derive(
     Clone, Copy, Debug, Eq, PartialEq, Hash, FromPrimitive, ToPrimitive,
 )]
-pub enum DiceInputMode {
+pub(crate) enum DiceInputMode {
     /// The `Not Configured` mode.
     NotInitialized = 0,
     /// The `Normal` mode.
@@ -96,7 +96,7 @@ pub enum DiceInputMode {
 #[derive(
     Clone, Copy, Debug, Eq, PartialEq, Hash, FromPrimitive, ToPrimitive,
 )]
-pub enum InternalInputType {
+pub(crate) enum InternalInputType {
     /// Associated with information the DPE has about its own identity. This
     /// information is included in the context's certificate info.
     DpeInfo = 1,
@@ -114,23 +114,23 @@ pub enum InternalInputType {
 /// Represents a complete set of DICE input values as defined by the Open
 /// Profile for DICE.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub struct DiceInput<'a> {
+pub(crate) struct DiceInput<'a> {
     /// The `Code` input value.
-    pub code: DiceInputCode<'a>,
+    pub(crate) code: DiceInputCode<'a>,
     /// The `Configuration Data` input value.
-    pub config: DiceInputConfig<'a>,
+    pub(crate) config: DiceInputConfig<'a>,
     /// The `Authority Data` input value. When not provided, the value will be
     /// 64 zero bytes.
-    pub authority: Option<DiceInputAuthority<'a>>,
+    pub(crate) authority: Option<DiceInputAuthority<'a>>,
     /// The `Mode Decision` input value.
-    pub mode: DiceInputMode,
+    pub(crate) mode: DiceInputMode,
     /// The `Hidden Inputs` input value. When not provided, the value will be
     /// 64 zero bytes.
-    pub hidden: Option<Hash>,
+    pub(crate) hidden: Option<Hash>,
 }
 
 /// A trait to represent DICE-related functionality required by a DPE.
-pub trait Dice {
+pub(crate) trait Dice {
     /// Performs a DICE derivation flow.
     ///
     /// On success returns a tuple containing the new CDI for signing followed

@@ -47,14 +47,14 @@ byte_array_wrapper!(
 );
 
 /// A session handshake message.
-pub type HandshakeMessage = SizedMessage<MAX_HANDSHAKE_MESSAGE_SIZE>;
+pub(crate) type HandshakeMessage = SizedMessage<MAX_HANDSHAKE_MESSAGE_SIZE>;
 /// A session handshake payload.
-pub type HandshakePayload = SizedMessage<MAX_HANDSHAKE_PAYLOAD_SIZE>;
+pub(crate) type HandshakePayload = SizedMessage<MAX_HANDSHAKE_PAYLOAD_SIZE>;
 /// A signature.
-pub type Signature = SizedMessage<MAX_SIGNATURE_SIZE>;
+pub(crate) type Signature = SizedMessage<MAX_SIGNATURE_SIZE>;
 
 /// A trait for committing previously staged changes.
-pub trait Commit {
+pub(crate) trait Commit {
     /// Commits a previously staged changes. When used with session cipher
     /// state, the staged changes are typically counter increments that result
     /// from encrypt or decrypt operations.
@@ -62,7 +62,7 @@ pub trait Commit {
 }
 
 /// A trait for maintaining a counter.
-pub trait Counter {
+pub(crate) trait Counter {
     /// Returns the current counter value.
     fn n(&self) -> u64;
     /// Sets the counter value to `n`.
@@ -70,14 +70,10 @@ pub trait Counter {
 }
 
 /// Provides cryptographic operations for encrypted sessions.
-pub trait SessionCrypto: Clone + core::fmt::Debug + Default {
+pub(crate) trait SessionCrypto {
     /// A type to represent session cipher states. These are owned by and opaque
     /// to the caller in `new_session_handshake` and `derive_session_handshake`.
-    type SessionCipherState: Commit
-        + Counter
-        + Clone
-        + core::fmt::Debug
-        + Default;
+    type SessionCipherState: Commit + Counter;
 
     /// Performs a session responder handshake for a new session.
     ///
@@ -194,7 +190,7 @@ pub trait SessionCrypto: Clone + core::fmt::Debug + Default {
 
 /// Provides cryptographic operations. These operations are specifically for DPE
 /// concepts, defined by a DPE profile, and to be invoked by a DPE instance.
-pub trait Crypto: Clone + core::fmt::Debug + Default {
+pub(crate) trait Crypto {
     /// An associated [`SessionCrypto`] type.
     type S: SessionCrypto;
 
