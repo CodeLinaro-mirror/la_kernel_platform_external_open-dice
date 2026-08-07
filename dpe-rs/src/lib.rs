@@ -48,19 +48,17 @@
 //! # Notes
 //!
 //! This crate is in development and not ready for production use.
-pub(crate) mod args;
-pub(crate) mod cbor;
-pub(crate) mod commands;
+pub mod args;
+pub mod cbor;
+pub mod commands;
 #[cfg(test)]
 pub(crate) mod commands_test;
 pub mod constants;
 pub mod crypto;
 pub mod dice;
-pub mod dpe;
-pub(crate) mod dpe_test;
 pub mod encode;
 #[cfg(test)]
 pub(crate) mod encode_test;
 pub mod error;
 pub mod memory;
-pub(crate) mod noise;
+pub mod noise;

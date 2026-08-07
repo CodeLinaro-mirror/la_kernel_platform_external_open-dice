@@ -4,7 +4,6 @@
 #define USE_EDDSA
 #define USE_ECDSA_SHA_256
 #define USE_ECDSA_SHA_384
-#define USE_MLDSA
 
 #define INCLUDE_ENCRYPT 0
 #define INCLUDE_ENCRYPT0 0

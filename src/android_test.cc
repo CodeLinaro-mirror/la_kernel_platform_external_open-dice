@@ -14,9 +14,6 @@
 
 #include "dice/android.h"
 
-#include <cstdint>
-#include <vector>
-
 #include "dice/test_framework.h"
 
 namespace {
