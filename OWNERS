@@ -1,5 +1,7 @@
 dkrahn@google.com
 jbires@google.com
 sethmo@google.com
+tonymd@google.com #{LAST_RESORT_SUGGESTION}
+tpudlik@google.com #{LAST_RESORT_SUGGESTION}
 vikramgaur@google.com
 include platform/system/core:main:/janitors/OWNERS #{LAST_RESORT_SUGGESTION}
